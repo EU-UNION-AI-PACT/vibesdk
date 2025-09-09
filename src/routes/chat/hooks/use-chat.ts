@@ -140,6 +140,31 @@ export function useChat({
 	// Track whether we've completed initial state restoration to avoid disrupting active sessions
 	const [isInitialStateRestored, setIsInitialStateRestored] = useState(false);
 
+  // Sanitizer for conversational messages (filters AI formatting tags)
+  // - Hides <enhanced_user_request> sections (even if closing tag arrives later)
+  // - Strips <user_response> and </user_response> while keeping inner content
+  // - Removes dangling closing tags for enhanced/user_response
+  const sanitizeConversationText = useCallback((text: string): string => {
+    let output = text ?? '';
+    // Remove paired enhanced sections entirely
+    output = output.replace(/<enhanced_user_request>[\s\S]*?<\/enhanced_user_request>/gi, '');
+    // If there's an unmatched opening enhanced tag, strip everything after it (prevent leaking while streaming)
+    const openIdx = output.search(/<enhanced_user_request>/i);
+    if (openIdx !== -1) {
+      output = output.slice(0, openIdx);
+    }
+    // Remove any stray closing enhanced tag
+    output = output.replace(/<\/enhanced_user_request>/gi, '');
+    // Strip user_response tags but keep the inner content
+    output = output.replace(/<\/?user_response>/gi, '');
+    // Collapse excessive blank lines introduced by removals
+    output = output.replace(/\n{3,}/g, '\n\n');
+    return output;
+  }, []);
+
+  // Keep raw buffers for streaming messages so sanitizer can handle partial tags across chunks
+  const conversationRawBuffersRef = useRef<Record<string, string>>({});
+
 	const updateStage = useCallback(
 		(stageId: ProjectStage['id'], data: Partial<Omit<ProjectStage, 'id'>>) => {
 			logger.debug('updateStage', { stageId, ...data });
@@ -309,7 +334,7 @@ export function useChat({
 						const restoredMessages = state.conversationMessages.map((msg) => ({
 							type: msg.role === 'user' ? 'user' as const : 'ai' as const,
 							id: (msg.conversationId || generateId()),
-							message: msg.content as string,
+							message: sanitizeConversationText(String(msg.content ?? '')),
 							isThinking: false
 						}));
 
@@ -920,32 +945,35 @@ Message: ${message.errors.map((e) => e.message).join('\n').trim()}`;
 				const messageId = message.conversationId || 'conversation_response';
 				
 				if (message.isStreaming) {
-					// Handle streaming chunks - append to existing conversation message
+					// Handle streaming chunks with raw buffer + sanitizer to support partial tags
 					setMessages((prev) => {
 						const existingMessageIndex = prev.findIndex(m => m.id === messageId && m.type === 'ai');
+						const currentRaw = conversationRawBuffersRef.current[messageId] ?? (existingMessageIndex !== -1 ? prev[existingMessageIndex].message : '');
+						const newRaw = `${currentRaw}${message.message}`;
+						conversationRawBuffersRef.current[messageId] = newRaw;
+						const visible = sanitizeConversationText(newRaw);
 						
 						if (existingMessageIndex !== -1) {
-							// Append chunk to existing message
-							return prev.map((msg, index) => 
-								index === existingMessageIndex 
-									? { ...msg, message: msg.message + message.message }
+							return prev.map((msg, index) =>
+								index === existingMessageIndex
+									? { ...msg, message: visible }
 									: msg
 							);
-						} else {
-							// Create new streaming message with unique ID
-							return [...prev, {
-								type: 'ai' as const,
-								id: messageId,
-								message: message.message,
-								isThinking: false
-							}];
 						}
+						return [...prev, {
+							type: 'ai' as const,
+							id: messageId,
+							message: visible,
+							isThinking: false
+						}];
 					});
 				} else {
-					// Handle complete message (fallback) - always create new message
+					// Handle complete message (fallback) - sanitize and add
+					conversationRawBuffersRef.current[messageId] = message.message || '';
+					const visible = sanitizeConversationText(message.message || '');
 					sendMessage({
 						id: messageId,
-						message: message.message,
+						message: visible,
 					});
 				}
 				break;

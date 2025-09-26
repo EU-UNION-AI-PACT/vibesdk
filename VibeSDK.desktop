@@ -1,0 +1,9 @@
+[Desktop Entry]
+Version=1.0
+Name=VibeSDK Development
+Comment=Starte VibeSDK Development Environment
+Exec=/path/to/vibesdk/start-vibesdk.sh
+Icon=applications-development
+Terminal=true
+Type=Application
+Categories=Development;

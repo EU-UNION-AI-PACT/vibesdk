@@ -1,0 +1,25 @@
+{
+  "name": "vibesdk-private",
+  "version": "1.0.0",
+  "description": "Private VibeSDK Development Environment",
+  "author": "Dein Name",
+  "private": true,
+  "scripts": {
+    "start": "bun run dev:frontend",
+    "start:full": "bun run dev:fullstack",
+    "setup": "bun install && bun run build",
+    "dev:frontend": "DEV_MODE=true bun run vite --config vite.config.simple.ts",
+    "dev:fullstack": "DEV_MODE=true bun run build && wrangler dev --config wrangler.minimal.jsonc --local --port 8787",
+    "dev:simple": "DEV_MODE=true bun run vite --config vite.config.simple.ts",
+    "dev:minimal": "DEV_MODE=true bun run build && wrangler dev --config wrangler.minimal.jsonc --local --port 8787",
+    "type-check": "tsc --noEmit"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/[DEIN-USERNAME]/vibesdk.git"
+  },
+  "homepage": "https://github.com/[DEIN-USERNAME]/vibesdk#readme",
+  "bugs": {
+    "url": "https://github.com/[DEIN-USERNAME]/vibesdk/issues"
+  }
+}

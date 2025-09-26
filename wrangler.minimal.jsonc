@@ -1,0 +1,46 @@
+{
+	"name": "vibesdk-minimal",
+	"main": "dist/vibesdk_production/index.js",
+	"compatibility_date": "2025-08-10",
+	"compatibility_flags": ["nodejs_compat"],
+	"assets": {
+		"directory": "dist/client",
+		"not_found_handling": "single-page-application",
+        "binding": "ASSETS"
+	},
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "vibesdk-db",
+			"database_id": "c4721a2b-b96a-428a-8b2a-b3d255b307e9"
+		}
+	],
+    "kv_namespaces": [
+        {
+            "binding": "VibecoderStore",
+            "id": "f066f3c2e4824981b48e8586c04db9c1"
+        }
+    ],
+    "durable_objects": {
+		"bindings": [
+            {
+                "class_name": "DORateLimitStore",
+                "name": "DORateLimitStore"
+            }
+		]
+	},
+	"migrations": [
+		{
+			"new_classes": [
+                "DORateLimitStore"
+			],
+			"tag": "v1"
+		}
+	],
+	"vars": {
+        "TEMPLATES_REPOSITORY": "https://github.com/cloudflare/vibesdk-templates",
+        "CUSTOM_DOMAIN": "localhost:8787",
+        "DEV_MODE": "true",
+        "MAX_SANDBOX_INSTANCES": "1"
+    }
+}

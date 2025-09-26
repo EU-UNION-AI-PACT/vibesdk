@@ -1,0 +1,64 @@
+{
+	"name": "vibesdk-local",
+	"main": "worker/index.ts",
+	"compatibility_date": "2025-08-10",
+	"compatibility_flags": ["nodejs_compat"],
+    "version_metadata": {
+        "binding": "CF_VERSION_METADATA"
+    },
+	"assets": {
+		"directory": "dist",
+		"not_found_handling": "single-page-application",
+        "run_worker_first": true,
+        "binding": "ASSETS"
+	},
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "vibesdk-db",
+			"database_id": "local-dev-db"
+		}
+	],
+	"durable_objects": {
+		"bindings": [
+			{
+				"class_name": "CodeGeneratorAgent",
+				"name": "CodeGenObject"
+			},
+            {
+                "class_name": "UserAppSandboxService",
+                "name": "Sandbox"
+            },
+            {
+                "class_name": "DORateLimitStore",
+                "name": "DORateLimitStore"
+            }
+		]
+	},
+    "kv_namespaces": [
+        {
+            "binding": "VibecoderStore",
+            "id": "local-kv-store"
+        }
+    ],
+	"migrations": [
+		{
+			"new_classes": [
+				"CodeGeneratorAgent",
+				"UserAppSandboxService",
+                "DORateLimitStore"
+			],
+			"tag": "v1"
+		}
+	],
+	"vars": {
+        "TEMPLATES_REPOSITORY": "https://github.com/cloudflare/vibesdk-templates",
+        "ALLOWED_EMAIL": "",
+        "DISPATCH_NAMESPACE": "local-namespace",
+        "CLOUDFLARE_AI_GATEWAY": "local-gateway",
+        "CUSTOM_DOMAIN": "localhost:5173",
+        "MAX_SANDBOX_INSTANCES": "2",
+        "SANDBOX_INSTANCE_TYPE": "standard"
+    },
+	"workers_dev": true
+}

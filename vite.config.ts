@@ -14,6 +14,9 @@ export default defineConfig({
 		exclude: ['format', 'editor.all'],
 		include: ['monaco-editor/esm/vs/editor/editor.api'],
 		force: true, // Force re-optimization on every start
+		rollupOptions: {
+			// Migrate from esbuildOptions to rollupOptions
+		},
 	},
 
 	// build: {

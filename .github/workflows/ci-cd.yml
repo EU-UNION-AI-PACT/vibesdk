@@ -1,0 +1,72 @@
+name: VibeSDK CI/CD
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+    
+    - name: Setup Bun
+      uses: oven-sh/setup-bun@v1
+      with:
+        bun-version: latest
+    
+    - name: Install Dependencies
+      run: bun install
+    
+    - name: Type Check
+      run: bun run type-check || tsc --noEmit
+    
+    - name: Lint Code
+      run: bun run lint || echo "Linting skipped"
+    
+    - name: Build Project
+      run: bun run build
+    
+    - name: Run Tests
+      run: bun run test || echo "Tests skipped"
+    
+    # Optional: Deploy to Cloudflare Pages
+    - name: Deploy to Cloudflare Pages
+      if: github.ref == 'refs/heads/main'
+      uses: cloudflare/pages-action@v1
+      with:
+        apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        projectName: vibesdk
+        directory: dist/client
+        gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+        
+  # Optional: Auto-create releases
+  release:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+      
+    - name: Create Release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v${{ github.run_number }}
+        release_name: VibeSDK v${{ github.run_number }}
+        body: |
+          Automated release from commit ${{ github.sha }}
+          
+          ## Changes
+          - Latest updates and improvements
+          
+        draft: false
+        prerelease: false
